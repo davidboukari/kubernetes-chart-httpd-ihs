@@ -109,3 +109,62 @@ $ curl -v -k -L --cert ./donotcommit/ssl/beats/beat.crt --key ./donotcommit/ssl/
 
 [Wed Oct 06 15:02:43.803151 2021] [rewrite:trace4] [pid 10:tid 140291104044800] mod_rewrite.c(480): [client 172.17.0.1:45790] 172.17.0.1 - - [localhost/sid#7f9812742e68][rid#7f98106680a0/initial] [perdir /usr/local/apache2/htdocs/] RewriteCond: input='beats.myelk.com' pattern='!^(.*client.dijon.fr)$' => matched
 ```
+
+## Manualy install
+```
+$ cat deployment-httpd-ihs.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd-ihs-dijon-fr
+  labels:
+    app: httpd-ihs
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: httpd-ihs
+  template:
+    metadata:
+      labels:
+        app: httpd-ihs
+    spec:
+      containers:
+      - name: httpd-ihs-dijon-fr
+        image: davbou/httpd-ihs:0.1
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+      imagePullSecrets:
+      - name: regcred
+
+$ cat service-nodeport-httpd-ihs.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpd-ihs-dijon-fr
+spec:
+  selector:
+    app: httpd-ihs
+  type: NodePort
+  ports:
+  - port: 443
+    targetPort: 443
+
+kubectl -n dev apply -f deployment-httpd-ihs.yml
+kubectl -n dev apply -f service-nodeport-httpd-ihs.yml
+```
+
+## helm
+```
+helm -n dev install httpd-ihs-dijon-fr . -f values-dijon-fr.yaml
+
+helm -n dev list
+NAME              	NAMESPACE	REVISION	UPDATED                                 	STATUS  	CHART          	APP VERSION
+httpd-ihs-dijon-fr	dev     	1       	2021-10-07 12:07:20.188299815 +0200 CEST	deployed	httpd-ihs-0.1.0	1.16.0
+```
