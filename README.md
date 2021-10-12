@@ -83,8 +83,6 @@ EOF
 
 ### Build & tests
 ```
-## Build an push
-```
 docker build . -t httpd-ihs:0.1   ;docker stop httpd-ihs ; docker rm httpd-ihs ;docker run -d --name httpd-ihs -p 9090:80 -p 9091:443  httpd-ihs:0.1; docker ps
 
 docker tag httpd-ihs:0.1   davbou/httpd-ihs:0.1
